@@ -2,6 +2,8 @@
 
 namespace App\Services\LoyaltyPoint;
 
+use App\Jobs\LoyaltyPoint\SendEmailJob;
+use App\Jobs\LoyaltyPoint\SendSmsJob;
 use App\Mail\LoyaltyPointsReceived;
 use App\Models\LoyaltyAccount;
 use App\Models\LoyaltyPointsTransaction;
@@ -32,13 +34,12 @@ class LoyaltyPointService
         $transaction =  LoyaltyPointsTransaction::performPaymentLoyaltyPoints($account->id, $data['loyalty_points_rule'], $data['description'], $data['payment_id'], $data['payment_amount'], $data['payment_time']);
         Log::info($transaction);
 
-        if ($account->email != '' && $account->email_notification) {
-            Mail::to($account)->send(new LoyaltyPointsReceived($transaction->points_amount, $account->getBalance()));
+        if ($account->isEmailNotification()) {
+            SendEmailJob::dispatch($account, $transaction);
         }
 
-        if ($account->phone != '' && $account->phone_notification) {
-            // instead SMS component
-            Log::info('You received' . $transaction->points_amount . 'Your balance' . $account->getBalance());
+        if ($account->isPhoneNotification()) {
+            SendSmsJob::dispatch($account, $transaction);
         }
 
         return $transaction;
