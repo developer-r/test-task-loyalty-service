@@ -4,6 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * App\Models\LoyaltyPointsRule
+ *
+ * @property int $id
+ * @property string $points_rule
+ * @property string $accrual_type
+ * @property float $accrual_value
+ */
 class LoyaltyPointsRule extends Model
 {
     public const ACCRUAL_TYPE_RELATIVE_RATE = 'relative_rate';

@@ -7,6 +7,7 @@ use App\Http\Requests\LoyaltyPoints\DepositRequest;
 use App\Http\Requests\LoyaltyPoints\WithdrawRequest;
 use App\Http\Resources\Transactions\TransactionResource;
 use App\Services\LoyaltyPoint\LoyaltyPointService;
+use HttpResponseException;
 use Illuminate\Http\JsonResponse;
 
 class LoyaltyPointsController extends Controller
@@ -46,6 +47,7 @@ class LoyaltyPointsController extends Controller
     /**
      * @param  WithdrawRequest  $request
      * @return JsonResponse
+     * @throws HttpResponseException
      */
     public function withdraw(WithdrawRequest $request): JsonResponse
     {
