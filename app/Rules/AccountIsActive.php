@@ -3,6 +3,7 @@
 namespace App\Rules;
 
 use App\Models\LoyaltyAccount;
+use App\Repositories\LoyaltyAccountRepository;
 use Illuminate\Contracts\Validation\Rule;
 
 class AccountIsActive implements Rule
@@ -12,7 +13,7 @@ class AccountIsActive implements Rule
      *
      * @return void
      */
-    public function __construct(private string $accountType)
+    public function __construct(private string $accountType, private LoyaltyAccountRepository $loyaltyAccountRepository)
     {}
 
     /**
@@ -24,11 +25,7 @@ class AccountIsActive implements Rule
      */
     public function passes($attribute, $value): bool
     {
-        $loyaltyAccount = LoyaltyAccount::query()
-            ->where($this->accountType, $value)
-            ->first();
-
-        return (bool) $loyaltyAccount?->active;
+        return $this->loyaltyAccountRepository->isActiveByTypeAndId($this->accountType, $value);
     }
 
     /**

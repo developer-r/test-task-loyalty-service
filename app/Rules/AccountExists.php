@@ -3,6 +3,7 @@
 namespace App\Rules;
 
 use App\Models\LoyaltyAccount;
+use App\Repositories\LoyaltyAccountRepository;
 use Illuminate\Contracts\Validation\Rule;
 
 class AccountExists implements Rule
@@ -12,7 +13,7 @@ class AccountExists implements Rule
      *
      * @return void
      */
-    public function __construct(private string $accountType)
+    public function __construct(private string $accountType, private LoyaltyAccountRepository $loyaltyAccountRepository)
     {}
 
     /**
@@ -24,9 +25,7 @@ class AccountExists implements Rule
      */
     public function passes($attribute, $value): bool
     {
-        return LoyaltyAccount::query()
-            ->where($this->accountType, $value)
-            ->exists();
+        return $this->loyaltyAccountRepository->existByTypeAndId($this->accountType, $value);
     }
 
     /**
