@@ -8,6 +8,17 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
+/**
+ * App\Models\LoyaltyAccount
+ *
+ * @property int $id
+ * @property string $phone
+ * @property string $card
+ * @property string $email
+ * @property bool $email_notification
+ * @property bool $phone_notification
+ * @property bool $active
+ */
 class LoyaltyAccount extends Model
 {
     protected $table = 'loyalty_account';
@@ -22,7 +33,9 @@ class LoyaltyAccount extends Model
     ];
 
     protected $casts = [
-        'active' => 'boolean'
+        'active' => 'boolean',
+        'email_notification' => 'boolean',
+        'phone_notification' => 'boolean',
     ];
 
     public function getBalance(): float

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\LoyaltyPoints\CancelRequest;
 use App\Http\Requests\LoyaltyPoints\DepositRequest;
 use App\Http\Requests\LoyaltyPoints\WithdrawRequest;
+use App\Http\Resources\Transactions\TransactionResource;
 use App\Mail\LoyaltyPointsReceived;
 use App\Models\LoyaltyAccount;
 use App\Models\LoyaltyPointsTransaction;
@@ -32,7 +33,7 @@ class LoyaltyPointsController extends Controller
             Log::info('You received' . $transaction->points_amount . 'Your balance' . $account->getBalance());
         }
 
-        return $transaction;
+        return new TransactionResource($transaction);
     }
 
     public function cancel(CancelRequest $request): JsonResponse
@@ -69,6 +70,6 @@ class LoyaltyPointsController extends Controller
         $transaction = LoyaltyPointsTransaction::withdrawLoyaltyPoints($account->id, $data['points_amount'], $data['description']);
         Log::info($transaction);
 
-        return $transaction;
+        return new TransactionResource($transaction);
     }
 }
