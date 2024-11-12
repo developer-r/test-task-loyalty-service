@@ -11,6 +11,7 @@ use App\Services\LoyaltyPoint\DTO\CreatePaymentLoyaltyPointDTO;
 use App\Services\LoyaltyPoint\Handlers\PaymentLoyaltyPointHandler;
 use App\Services\LoyaltyPoint\Handlers\WithdrawLoyaltyPointHandler;
 use HttpResponseException;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class LoyaltyPointService
@@ -28,32 +29,34 @@ class LoyaltyPointService
      */
     public function deposit(array $data): LoyaltyPointsTransaction
     {
-        $type = $data['account_type'];
-        $id = $data['account_id'];
+        return DB::transaction(function () use ($data) {
+            $type = $data['account_type'];
+            $id = $data['account_id'];
 
-        $account = $this->loyaltyAccountRepository->getByTypeAndId($type, $id);
+            $account = $this->loyaltyAccountRepository->getByTypeAndId($type, $id);
 
-        $dto = new CreatePaymentLoyaltyPointDTO(
-            $account->id,
-            $data['loyalty_points_rule'],
-            $data['description'],
-            $data['payment_id'],
-            $data['payment_amount'],
-            $data['payment_time']
-        );
+            $dto = new CreatePaymentLoyaltyPointDTO(
+                $account->id,
+                $data['loyalty_points_rule'],
+                $data['description'],
+                $data['payment_id'],
+                $data['payment_amount'],
+                $data['payment_time']
+            );
 
-        $transaction = $this->paymentLoyaltyPointHandler->handle($dto);
-        Log::info($transaction);
+            $transaction = $this->paymentLoyaltyPointHandler->handle($dto);
+            Log::info($transaction);
 
-        if ($account->isEmailNotification()) {
-            SendEmailJob::dispatch($account, $transaction);
-        }
+            if ($account->isEmailNotification()) {
+                SendEmailJob::dispatch($account, $transaction);
+            }
 
-        if ($account->isPhoneNotification()) {
-            SendSmsJob::dispatch($account, $transaction);
-        }
+            if ($account->isPhoneNotification()) {
+                SendSmsJob::dispatch($account, $transaction);
+            }
 
-        return $transaction;
+            return $transaction;
+        });
     }
 
     /**
@@ -77,36 +80,38 @@ class LoyaltyPointService
      */
     public function withdraw(array $data): LoyaltyPointsTransaction
     {
-        $type = $data['account_type'];
-        $id = $data['account_id'];
+        return DB::transaction(function () use ($data) {
+            $type = $data['account_type'];
+            $id = $data['account_id'];
 
-        $account = $this->loyaltyAccountRepository->getByTypeAndId($type, $id);
+            $account = $this->loyaltyAccountRepository->getByTypeAndId($type, $id);
 
-        if ($data['points_amount'] <= 0) {
-            Log::info('Wrong loyalty points amount: ' . $data['points_amount']);
+            if ($data['points_amount'] <= 0) {
+                Log::info('Wrong loyalty points amount: ' . $data['points_amount']);
 
-            throw new HttpResponseException(response()->json([
-                'message' => 'Wrong loyalty points amount',
-            ], 400));
-        }
+                throw new HttpResponseException(response()->json([
+                    'message' => 'Wrong loyalty points amount',
+                ], 400));
+            }
 
-        if ($account->getBalance() < $data['points_amount']) {
-            Log::info('Insufficient funds: ' . $data['points_amount']);
+            if ($account->getBalance() < $data['points_amount']) {
+                Log::info('Insufficient funds: ' . $data['points_amount']);
 
-            throw new HttpResponseException(response()->json([
-                'message' => 'Insufficient funds',
-            ], 400));
-        }
+                throw new HttpResponseException(response()->json([
+                    'message' => 'Insufficient funds',
+                ], 400));
+            }
 
-        $dto = new CreateWithdrawLoyaltyPointDTO(
-            $account->id,
-            $data['points_amount'],
-            $data['description']
-        );
+            $dto = new CreateWithdrawLoyaltyPointDTO(
+                $account->id,
+                $data['points_amount'],
+                $data['description']
+            );
 
-        $transaction = $this->withdrawLoyaltyPointHandler->handler($dto);
-        Log::info($transaction);
+            $transaction = $this->withdrawLoyaltyPointHandler->handler($dto);
+            Log::info($transaction);
 
-        return $transaction;
+            return $transaction;
+        });
     }
 }
